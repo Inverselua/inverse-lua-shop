@@ -222,16 +222,12 @@
   </div>
 </section>
 
-<footer class="site">&copy; 2026 Inverse.Lua &mdash; demo storefront</footer>
+<footer class="site">&copy; 2026 Inverse.Lua</footer>
 
 <div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
 
 <script>
-/* ============================================================
-   Inverse.Lua — single-product key store (demo)
-   >>> GOING LIVE: real payments + real keys must run on a SERVER.
-   Search "BACKEND:" for the exact seams.
-   ============================================================ */
+/* Inverse.Lua — storefront. Talks to the backend for real payments + keys. */
 
 const PRODUCT = 'Inverse.Lua';
 // NOTE: prices here are for DISPLAY ONLY. The real charged amount is set on
@@ -292,11 +288,11 @@ function payIcon(id){
 }
 function payNote(id){
   const n={
-    stripe:`You'll be sent to Stripe's secure card form. <b>BACKEND:</b> create a Stripe Checkout Session server-side and redirect to it.`,
-    cashapp:`Approve the request in your Cash App. <b>BACKEND:</b> Cash App Pay via Square's Web SDK + server confirmation.`,
-    paypal:`Log in to PayPal to approve. <b>BACKEND:</b> create &amp; capture the order with PayPal's Orders API.`,
-    venmo:`Approve in the Venmo app. <b>BACKEND:</b> Venmo runs through PayPal's SDK — enable Venmo on the same order.`,
-    bitcoin:`Send the exact amount to the address below. Key releases after 1 confirmation. <b>BACKEND:</b> watch the chain via BTCPay Server or Coinbase Commerce.`,
+    stripe:`You'll be taken to Stripe's secure checkout to pay by card. Your key appears here the moment payment clears.`,
+    cashapp:`You'll be taken to secure checkout to pay with Cash App. Your key appears here the moment payment clears.`,
+    paypal:`Pay with your PayPal account at secure checkout.`,
+    venmo:`Approve the payment in the Venmo app.`,
+    bitcoin:`Pay with Bitcoin at secure checkout.`,
   };
   return n[id];
 }
@@ -340,7 +336,7 @@ function checkoutView(){
         <div class="sum-line total"><span>Total</span><span class="mono">${fmt(o.price)}</span></div>
       </div>
       <button class="btn-primary" id="payBtn" style="margin-top:18px" ${UNAVAILABLE.includes(selectedPay)?'disabled':''}>${payBtnLabel(selectedPay, o.price)}</button>
-      <p style="font-size:.74rem;color:var(--ink-soft);text-align:center;margin-top:12px">Demo checkout — no real charge is made.</p>
+      <p style="font-size:.74rem;color:var(--ink-soft);text-align:center;margin-top:12px">Secure checkout powered by Stripe.</p>
     </div>`;
 }
 
