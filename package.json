@@ -1,0 +1,22 @@
+{
+  "name": "inverse-lua-store",
+  "version": "1.0.0",
+  "description": "Inverse.Lua — digital key store with Stripe payments and instant key delivery",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "add-keys": "node scripts/add-keys.js",
+    "stock": "node scripts/add-keys.js --stock"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "stripe": "^16.12.0"
+  }
+}
