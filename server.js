@@ -142,7 +142,6 @@ app.post('/api/checkout', async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: stripeMethods,
       customer_email: email,
       line_items: [{
         price_data: {
