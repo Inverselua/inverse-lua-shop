@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inverse.Lua — Admin</title>
+<style>
+  :root {
+    --bg:#0a0a0b; --surface:#141416; --surface-2:#1c1c1f; --line:#2c2c31;
+    --ink:#f4f4f5; --ink-soft:#9a9aa2; --good:#4fd98a; --bad:#ff6b6b;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.5;
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left)); }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { font-size:1.4rem; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+  h1 .tag { font-family:var(--mono); font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-soft); border:1px solid var(--line); padding:3px 7px; border-radius:6px; }
+  .sub { color:var(--ink-soft); font-size:.9rem; margin:0 0 24px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:16px; }
+  .card h2 { font-size:1rem; margin:0 0 14px; }
+  label { display:block; font-size:.78rem; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+  input, select, textarea { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px;
+    background:var(--bg); color:var(--ink); font-size:.92rem; outline:none; font-family:var(--sans); }
+  textarea { font-family:var(--mono); font-size:.82rem; min-height:140px; resize:vertical; white-space:pre; }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink-soft); }
+  .row { display:flex; gap:10px; }
+  .row > * { flex:1; }
+  .field { margin-bottom:14px; }
+  button { font:inherit; cursor:pointer; border:none; background:var(--ink); color:var(--bg); font-weight:600;
+    padding:11px 16px; border-radius:10px; transition:.14s; }
+  button:hover { opacity:.88; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost { background:var(--surface-2); color:var(--ink); border:1px solid var(--line); }
+  .stock { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stock .s { background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
+  .stock .s b { display:block; font-family:var(--mono); font-size:1.7rem; }
+  .stock .s span { font-size:.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; }
+  .msg { margin-top:12px; font-size:.86rem; padding:10px 12px; border-radius:9px; display:none; }
+  .msg.ok { display:block; background:color-mix(in srgb, var(--good) 15%, transparent); color:var(--good); }
+  .msg.err { display:block; background:color-mix(in srgb, var(--bad) 15%, transparent); color:var(--bad); }
+  table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
+  th { color:var(--ink-soft); font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; }
+  td.mono { font-family:var(--mono); }
+  .hint { font-size:.76rem; color:var(--ink-soft); margin-top:6px; }
+  a.back { color:var(--ink-soft); font-size:.82rem; text-decoration:none; }
+  a.back:hover { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Inverse.Lua <span class="tag">Admin</span></h1>
+  <p class="sub">Load keys into your store and watch stock & orders. <a class="back" href="/">← view store</a></p>
+
+  <!-- Admin password -->
+  <div class="card">
+    <label for="secret">Admin password</label>
+    <input type="password" id="secret" placeholder="Your ADMIN_SECRET" autocomplete="off">
+    <p class="hint">This is the ADMIN_SECRET you set in Railway. It's remembered on this device only, and never shown to anyone.</p>
+  </div>
+
+  <!-- Stock -->
+  <div class="card">
+    <h2>Keys in stock</h2>
+    <div class="stock" id="stock">
+      <div class="s"><b id="st-day">–</b><span>1 Day</span></div>
+      <div class="s"><b id="st-week">–</b><span>1 Week</span></div>
+      <div class="s"><b id="st-month">–</b><span>1 Month</span></div>
+    </div>
+    <button class="ghost" id="refresh" style="margin-top:14px">Refresh</button>
+  </div>
+
+  <!-- Add keys -->
+  <div class="card">
+    <h2>Add keys</h2>
+    <div class="field">
+      <label for="dur">Which key type are these for?</label>
+      <select id="dur">
+        <option value="day">1 Day Key</option>
+        <option value="week" selected>1 Week Key</option>
+        <option value="month">1 Month Key</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="keys">Paste your keys — one per line</label>
+      <textarea id="keys" placeholder="INV-XXXX-XXXX-XXXX&#10;INV-YYYY-YYYY-YYYY&#10;INV-ZZZZ-ZZZZ-ZZZZ"></textarea>
+      <p class="hint">Each line becomes one sellable key. Duplicates are skipped automatically.</p>
+    </div>
+    <button id="add">Add these keys</button>
+    <div class="msg" id="addMsg"></div>
+  </div>
+
+  <!-- Orders -->
+  <div class="card">
+    <h2>Recent orders</h2>
+    <button class="ghost" id="loadOrders">Load orders</button>
+    <div class="msg" id="ordMsg"></div>
+    <div id="ordWrap" style="margin-top:12px; overflow-x:auto"></div>
+  </div>
+</div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const secretEl = $('#secret');
+
+  // Remember the admin password on this device for convenience.
+  try { const saved = localStorage.getItem('inv_admin_secret'); if (saved) secretEl.value = saved; } catch(e){}
+  secretEl.addEventListener('input', () => { try { localStorage.setItem('inv_admin_secret', secretEl.value); } catch(e){} });
+
+  async function loadStock() {
+    try {
+      const r = await fetch('/api/stock');
+      const s = await r.json();
+      $('#st-day').textContent = s.day ?? 0;
+      $('#st-week').textContent = s.week ?? 0;
+      $('#st-month').textContent = s.month ?? 0;
+    } catch(e) {}
+  }
+
+  $('#refresh').addEventListener('click', loadStock);
+
+  $('#add').addEventListener('click', async () => {
+    const secret = secretEl.value.trim();
+    const duration = $('#dur').value;
+    const codes = $('#keys').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const msg = $('#addMsg');
+    msg.className = 'msg';
+    if (!secret) { msg.className='msg err'; msg.textContent='Enter your admin password first.'; return; }
+    if (!codes.length) { msg.className='msg err'; msg.textContent='Paste at least one key.'; return; }
+
+    const btn = $('#add'); btn.disabled = true; btn.textContent = 'Adding…';
+    try {
+      const r = await fetch('/api/admin/keys', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ duration, codes })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Something went wrong.');
+      msg.className='msg ok';
+      msg.textContent = `Added ${data.added} key(s). In stock now → day: ${data.stock.day}, week: ${data.stock.week}, month: ${data.stock.month}`;
+      $('#keys').value = '';
+      loadStock();
+    } catch(err) {
+      msg.className='msg err';
+      msg.textContent = err.message === 'Unauthorized' ? 'Wrong admin password.' : err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add these keys';
+    }
+  });
+
+  $('#loadOrders').addEventListener('click', async () => {
+    const secret = secretEl.value.trim();
+    const msg = $('#ordMsg'); msg.className='msg';
+    if (!secret) { msg.className='msg err'; msg.textContent='Enter your admin password first.'; return; }
+    try {
+      const r = await fetch('/api/admin/orders', { headers:{ 'x-admin-secret': secret } });
+      const rows = await r.json();
+      if (!r.ok) throw new Error(rows.error || 'Could not load orders.');
+      if (!rows.length) { $('#ordWrap').innerHTML = '<p class="hint">No orders yet.</p>'; return; }
+      $('#ordWrap').innerHTML = `<table>
+        <tr><th>When</th><th>Email</th><th>Type</th><th>Paid</th><th>Key</th></tr>
+        ${rows.map(o => `<tr>
+          <td>${new Date(o.created_at).toLocaleString()}</td>
+          <td>${o.email || '—'}</td>
+          <td>${o.duration || '—'}</td>
+          <td class="mono">$${((o.amount||0)/100).toFixed(2)}</td>
+          <td class="mono">${o.key_code || '⚠ none'}</td>
+        </tr>`).join('')}
+      </table>`;
+    } catch(err) {
+      msg.className='msg err';
+      msg.textContent = err.message === 'Unauthorized' ? 'Wrong admin password.' : err.message;
+    }
+  });
+
+  loadStock();
+</script>
+</body>
+</html>
