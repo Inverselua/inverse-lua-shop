@@ -1,4 +1,4 @@
-# Inverse.Lua — real key store
+# Nova.gg — key store
 
 A working storefront that takes **real payments** and delivers a **real key**
 instantly. Card and Cash App go live through Stripe. The key is only released
@@ -14,7 +14,7 @@ without paying.
 | 1 | **A Stripe account** | [stripe.com](https://stripe.com) | Free to open; Stripe takes ~2.9% + 30¢ per sale |
 | 2 | **A host to run the server** | [Railway](https://railway.app) or [Render](https://render.com) | Free tier to start |
 | 3 | **A domain name** (optional) | [Namecheap](https://namecheap.com) / [Cloudflare](https://cloudflare.com) | ~$10/year |
-| 4 | **Your actual Inverse.Lua keys** | You generate these | — |
+| 4 | **Your actual Nova keys** | You generate these | — |
 
 That's it. You do **not** need to write any code — it's all here.
 

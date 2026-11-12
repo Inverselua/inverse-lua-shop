@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Inverse.Lua — Admin</title>
+<title>Nova — Admin</title>
 <style>
   :root {
     --bg:#0a0a0b; --surface:#141416; --surface-2:#1c1c1f; --line:#2c2c31;
@@ -34,10 +34,10 @@
   button:hover { opacity:.88; }
   button:disabled { opacity:.5; cursor:not-allowed; }
   button.ghost { background:var(--surface-2); color:var(--ink); border:1px solid var(--line); }
-  .stock { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stock { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
   .stock .s { background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
   .stock .s b { display:block; font-family:var(--mono); font-size:1.7rem; }
-  .stock .s span { font-size:.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; }
+  .stock .s span { display:block; font-size:.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; }
   .msg { margin-top:12px; font-size:.86rem; padding:10px 12px; border-radius:9px; display:none; }
   .msg.ok { display:block; background:color-mix(in srgb, var(--good) 15%, transparent); color:var(--good); }
   .msg.err { display:block; background:color-mix(in srgb, var(--bad) 15%, transparent); color:var(--bad); }
@@ -52,7 +52,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Inverse.Lua <span class="tag">Admin</span></h1>
+  <h1>Nova <span class="tag">Admin</span></h1>
   <p class="sub">Load keys into your store and watch stock & orders. <a class="back" href="/">← view store</a></p>
 
   <!-- Admin password -->
@@ -65,11 +65,7 @@
   <!-- Stock -->
   <div class="card">
     <h2>Keys in stock</h2>
-    <div class="stock" id="stock">
-      <div class="s"><b id="st-day">–</b><span>1 Day</span></div>
-      <div class="s"><b id="st-week">–</b><span>1 Week</span></div>
-      <div class="s"><b id="st-month">–</b><span>1 Month</span></div>
-    </div>
+    <div class="stock" id="stock"></div>
     <button class="ghost" id="refresh" style="margin-top:14px">Refresh</button>
   </div>
 
@@ -77,15 +73,11 @@
   <div class="card">
     <h2>Add keys</h2>
     <div class="field">
-      <label for="dur">Which key type are these for?</label>
-      <select id="dur">
-        <option value="day">1 Day Key</option>
-        <option value="week" selected>1 Week Key</option>
-        <option value="month">1 Month Key</option>
-      </select>
+      <label for="dur">Which product are these for?</label>
+      <select id="dur"></select>
     </div>
     <div class="field">
-      <label for="keys">Paste your keys — one per line</label>
+      <label for="keys">Paste keys or accounts — one per line (accounts as login;password)</label>
       <textarea id="keys" placeholder="INV-XXXX-XXXX-XXXX&#10;INV-YYYY-YYYY-YYYY&#10;INV-ZZZZ-ZZZZ-ZZZZ"></textarea>
       <p class="hint">Each line becomes one sellable key. Duplicates are skipped automatically.</p>
     </div>
@@ -107,16 +99,14 @@
   const secretEl = $('#secret');
 
   // Remember the admin password on this device for convenience.
-  try { const saved = localStorage.getItem('inv_admin_secret'); if (saved) secretEl.value = saved; } catch(e){}
-  secretEl.addEventListener('input', () => { try { localStorage.setItem('inv_admin_secret', secretEl.value); } catch(e){} });
+  try { const saved = localStorage.getItem('nova_admin_secret'); if (saved) secretEl.value = saved; } catch(e){}
+  secretEl.addEventListener('input', () => { try { localStorage.setItem('nova_admin_secret', secretEl.value); } catch(e){} });
 
   async function loadStock() {
     try {
       const r = await fetch('/api/stock');
       const s = await r.json();
-      $('#st-day').textContent = s.day ?? 0;
-      $('#st-week').textContent = s.week ?? 0;
-      $('#st-month').textContent = s.month ?? 0;
+      $('#stock').innerHTML = PRODUCTS.map(p => `<div class="s"><b>${s[p.sku] ?? 0}</b><span>${p.name}</span></div>`).join('');
     } catch(e) {}
   }
 
@@ -141,7 +131,7 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Something went wrong.');
       msg.className='msg ok';
-      msg.textContent = `Added ${data.added} key(s). In stock now → day: ${data.stock.day}, week: ${data.stock.week}, month: ${data.stock.month}`;
+      msg.textContent = `Added ${data.added} item(s) to ${$('#dur').selectedOptions[0].textContent}. That product now has ${data.stock[duration]} in stock.`;
       $('#keys').value = '';
       loadStock();
     } catch(err) {
@@ -177,7 +167,12 @@
     }
   });
 
-  loadStock();
+  let PRODUCTS = [];
+  (async () => {
+    try { PRODUCTS = await (await fetch('/api/products')).json(); } catch(e) {}
+    $('#dur').innerHTML = PRODUCTS.map(p => `<option value="${p.sku}">${p.name}</option>`).join('');
+    loadStock();
+  })();
 </script>
 </body>
 </html>

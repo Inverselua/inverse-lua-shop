@@ -1,7 +1,7 @@
 {
-  "name": "inverse-lua-store",
+  "name": "nova-store",
   "version": "1.0.0",
-  "description": "Inverse.Lua — digital key store with Stripe payments and instant key delivery",
+  "description": "Nova — digital key store with Stripe payments and instant key delivery",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {

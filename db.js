@@ -26,7 +26,7 @@ db.pragma('journal_mode = WAL');
 db.exec(`
   CREATE TABLE IF NOT EXISTS keys (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    duration   TEXT    NOT NULL,                 -- 'day' | 'week' | 'month'
+    duration   TEXT    NOT NULL,                 -- product code (SKU), see products.js
     code       TEXT    NOT NULL UNIQUE,          -- the actual license key
     status     TEXT    NOT NULL DEFAULT 'available', -- 'available' | 'sold'
     order_id   TEXT,                             -- which order claimed it
@@ -67,11 +67,12 @@ function addKeys(duration, codes) {
 }
 
 // How many unused keys are available per duration.
-function stock() {
+function stock(skus = []) {
   const rows = db.prepare(
     `SELECT duration, COUNT(*) AS n FROM keys WHERE status = 'available' GROUP BY duration`
   ).all();
-  const out = { day: 0, week: 0, month: 0 };
+  const out = {};
+  for (const sku of skus) out[sku] = 0;
   for (const r of rows) out[r.duration] = r.n;
   return out;
 }
